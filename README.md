@@ -1,6 +1,22 @@
 # Elasticsearch Syslog plugin
 
-Receive syslog requests with Elasticsearch.
+With this plugin, Elasticsearch can receive syslog messages over UDP or TCP protocol.
+
+## Parameter
+
+You can set the following parameters:
+
+- `syslog.host` (default not set)
+- `syslog.port` (default 9500-9600 port range)
+- `syslog.index` (default 'syslog-'YYYY.MM.dd)
+- `syslog.index_is_timewindow` (default true)
+- `syslog type` (default syslog)
+- `syslog.bulk_actions` (default 1000)
+- `syslog.bulk_size` (default 5MB)
+- `syslog.flush_interval` (default 5s)
+- `syslog.concurrent_requests` (default 4)
+- `syslog.receive_buffer_size` (default 5MB)
+- `syslog.receive_predictor_size` (default 5MB)
 
 ## Versions
 
@@ -20,7 +36,7 @@ Do not forget to restart the node after installing.
 
 | File                                          | SHA1                                     |
 | --------------------------------------------- | -----------------------------------------|
-| elasticsearch-syslog-1.2.1.0.zip              | |
+| elasticsearch-syslog-1.2.1.0.zip              | bf7f911ab0fa8b9d2396623ee715d8d690adf848 |
 
 ## Project docs
 

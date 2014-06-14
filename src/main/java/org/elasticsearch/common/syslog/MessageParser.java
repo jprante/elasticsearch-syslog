@@ -107,7 +107,7 @@ public class MessageParser {
         builder.field("message", data);
     }
 
-    protected Long parseRFC5424Date(String msg) {
+    private Long parseRFC5424Date(String msg) {
         int len = msg.length();
         if (len <= RFC5424_PREFIX_LEN) {
             throw new ElasticsearchIllegalArgumentException("bad format: not a valid RFC5424 timestamp: " + msg);
@@ -167,7 +167,7 @@ public class MessageParser {
         return timestamp;
     }
 
-    protected Long parseRFC3164Time(String timestamp) {
+    private Long parseRFC3164Time(String timestamp) {
         DateTime now = DateTime.now();
         int year = now.getYear();
         timestamp = TWO_SPACES.matcher(timestamp).replaceFirst(" ");
