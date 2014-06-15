@@ -11,7 +11,10 @@ import org.elasticsearch.common.joda.time.format.DateTimeFormatter;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -35,6 +38,16 @@ public class MessageParser {
 
     private Cache<String, Long> timestampCache;
 
+    private Map<String,String> fieldNames = new HashMap<String,String>() {{
+        put("host", "host");
+        put("facility", "facility");
+        put("severity", "severity");
+        put("timestamp", "timestamp");
+        put("message", "message");
+    }};
+
+    private Map<String,Pattern> patterns;
+
     public MessageParser() {
         timeParser = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss").withZoneUTC();
         timestampCache = CacheBuilder.newBuilder().maximumSize(1000).build(
@@ -45,6 +58,16 @@ public class MessageParser {
                         return timeParser.parseMillis(key);
                     }
                 });
+    }
+
+    public MessageParser setPatterns(Map<String,Pattern> patterns) {
+        this.patterns = patterns;
+        return this;
+    }
+
+    public MessageParser setFieldName(String name, String newName) {
+        fieldNames.put(name, newName);
+        return this;
     }
 
     public void parseMessage(String msg, XContentBuilder builder) throws IOException {
@@ -60,7 +83,8 @@ public class MessageParser {
         int pri = Integer.parseInt(msg.substring(1, end));
         Facility facility = Facility.fromNumericalCode(pri / 8);
         Severity severity = Severity.fromNumericalCode(pri % 8);
-        builder.field("facility", facility.label()).field("severity", severity.label());
+        builder.field(fieldNames.get("facility"), facility.label())
+                .field(fieldNames.get("severity"), severity.label());
         if (msgLen <= end + 1) {
             throw new ElasticsearchIllegalArgumentException("bad format: no data except priority " + msg);
         }
@@ -90,13 +114,13 @@ public class MessageParser {
             timestamp = parseRFC5424Date(msg.substring(pos, sp));
             pos = sp + 1;
         }
-        builder.field("timestamp", formatter.print(timestamp));
+        builder.field(fieldNames.get("timestamp"), formatter.print(timestamp));
         int ns = msg.indexOf(' ', pos);
         if (ns == -1) {
             throw new ElasticsearchIllegalArgumentException("bad syslog format (missing hostname)");
         }
         String hostname = msg.substring(pos, ns);
-        builder.field("host", hostname);
+        builder.field(fieldNames.get("host"), hostname);
         String data;
         if (msgLen > ns + 1) {
             pos = ns + 1;
@@ -104,7 +128,15 @@ public class MessageParser {
         } else {
             data = msg;
         }
-        builder.field("message", data);
+        builder.field(fieldNames.get("message"), data);
+        if (patterns != null) {
+            for (Map.Entry<String,Pattern> entry : patterns.entrySet()) {
+                Matcher m = entry.getValue().matcher(data);
+                if (m.find()) {
+                    builder.field(entry.getKey(), m.group(1));
+                }
+            }
+        }
     }
 
     private Long parseRFC5424Date(String msg) {

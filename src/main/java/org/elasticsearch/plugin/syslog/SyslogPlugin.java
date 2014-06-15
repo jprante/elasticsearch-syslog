@@ -4,8 +4,8 @@ import org.elasticsearch.common.component.LifecycleComponent;
 import org.elasticsearch.common.inject.Module;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.plugins.AbstractPlugin;
-import org.elasticsearch.plugin.syslog.SyslogModule;
-import org.elasticsearch.plugin.syslog.SyslogService;
+import org.elasticsearch.syslog.SyslogModule;
+import org.elasticsearch.syslog.SyslogService;
 
 import java.util.Collection;
 

@@ -6,28 +6,31 @@ With this plugin, Elasticsearch can receive syslog messages over UDP or TCP prot
 
 You can set the following parameters:
 
-- `syslog.host` (default not set)
-- `syslog.port` (default 9500-9600 port range)
-- `syslog.index` (default 'syslog-'YYYY.MM.dd)
-- `syslog.index_is_timewindow` (default true)
-- `syslog type` (default syslog)
-- `syslog.bulk_actions` (default 1000)
-- `syslog.bulk_size` (default 5MB)
-- `syslog.flush_interval` (default 5s)
-- `syslog.concurrent_requests` (default 4)
-- `syslog.receive_buffer_size` (default 5MB)
-- `syslog.receive_predictor_size` (default 5MB)
+- `syslog.host` host address for socket bind call (default not set, will use 0.0.0.0 = bind all)
+- `syslog.port` port number for socket bind call (default 9500-9600 port range)
+- `syslog.index` for index name (default 'syslog-'YYYY.MM.dd)
+- `syslog.index_is_timewindow` if index name is a date pattern (default true)
+- `syslog.type` for index type (default syslog)
+- `syslog.bulk_actions` number of actions in a single bulk action (default 1000)
+- `syslog.bulk_size` maximum volume of a single bulk request (default 5MB)
+- `syslog.flush_interval` bulk indexing flush interval (default 5s)
+- `syslog.concurrent_requests` bulk request concurrency (default 4)
+- `syslog.receive_buffer_size` socket receive buffer size (default 5MB)
+- `syslog.receive_predictor_size` socket receive predictor size (default 5MB)
+- `syslog.field_names` for mapping field names of the indexed syslog message
+- `syslog.patterns` for matching content in the syslog messages
+
 
 ## Versions
 
 | Elasticsearch version  | Plugin      | Release date |
 | ---------------------- | ----------- | -------------|
-| 1.2.1                  | 1.2.1.0     | Jun 14, 2014 |
+| 1.2.1                  | 1.2.1.1     | Jun 15, 2014 |
 
 ## Installation
 
 ```
-./bin/plugin -install syslog -url http://xbib.org/repository/org/xbib/elasticsearch/plugin/elasticsearch-syslog/1.2.1.0/elasticsearch-syslog-1.2.1.0.zip
+./bin/plugin -install syslog -url http://xbib.org/repository/org/xbib/elasticsearch/plugin/elasticsearch-syslog/1.2.1.1/elasticsearch-syslog-1.2.1.1.zip
 ```
 
 Do not forget to restart the node after installing.
@@ -36,6 +39,7 @@ Do not forget to restart the node after installing.
 
 | File                                          | SHA1                                     |
 | --------------------------------------------- | -----------------------------------------|
+| elasticsearch-syslog-1.2.1.1.zip              | 7813a73e12628c60429aec1d89dd42b352d68a1b |
 | elasticsearch-syslog-1.2.1.0.zip              | bf7f911ab0fa8b9d2396623ee715d8d690adf848 |
 
 ## Project docs
@@ -52,7 +56,7 @@ Add something like
 
     *.*    @127.0.0.1:9500
 
-to `/etc/syslog.conf` and restart syslog daemon. Then, start Elasticsearch with syslog plugin. 
+to `/etc/syslog.conf` and restart the syslog daemon. Then, start Elasticsearch with syslog plugin. 
 After a while, you can search logs with
 
     curl '0:9200/syslog*/_search?pretty'
@@ -108,6 +112,59 @@ and the result will look like
           "_source":{"protocol":"udp","local":"/0:0:0:0:0:0:0:0:9500","facility":"DAEMON","severity":"DEBUG","timestamp":"2014-06-14T21:37:31.000Z","host":"jorgprantesmbp.joerg","message":"com.apple.metadata.mdflagwriter[523]: Handle message /Users/joerg/Library/Application Support/Google/Chrome/Default/TransportSecurity\n"}
         } ]
       }
+    }
+
+## Example: field name mapping with `syslog.field_names`
+
+The default field names are
+
+    protocol*   "udp" or "tcp"
+    local*      local INET address
+    remote*     remote INET address
+    host        parsed host name
+    facility    parsed facility name
+    severity    parsed severity name
+    timestamp   parsed timestamp (converted to Elasticsearch `dateOptionalTime` format in UTC)
+    message     raw message
+
+If you want to rename fields (the fields marked with `*` can not be changed), you can use a field name map like this:
+
+    syslog:
+        field_names:
+            timestamp : "@timestamp"
+
+This renames the field `timestamp` to `@timestamp` (e.g. for convenience with Kibana)
+
+## Example: PHP log parsing
+ 
+If you want to create structured logs from PHP by using the `syslog.patterns` feature, this example is for you.
+
+Change your syslog daemon to forward all messages to Elasticsearch syslog plugin at port 9500 on same host by adding
+
+    *.*    @127.0.0.1:9500
+
+to `/etc/syslog.conf` and restart the syslog daemon. 
+
+In `$ES_HOME/config/elasticsearch.yml`, define patterns to create extra fields if the syslog message matches.
+
+    syslog:
+        patterns:
+            criticality: "PHP (.*?):"
+            file: "in (.*?) on line"
+            line: "on line (.*)$"
+
+Then, you can test PHP errors from command line:
+
+    php -d error_log=syslog -d log_errors=On -r 'trigger_error("Alles scheisse");'
+
+    curl '0:9200/syslog*/_search?q=php&pretty'
+
+    {
+      "_index" : "syslog-2014.06.15",
+      "_type" : "syslog",
+      "_id" : "KDJqCAuMReGwAPa7i2vbJQ",
+      "_score" : 1.3575592,
+      "_source":{"protocol":"udp","local":"/0:0:0:0:0:0:0:0:9500","facility":"USER","severity":"NOTICE","timestamp":"2014-06-15T12:36:29.000Z","host":"jorgprantesmbp.joerg","message":"php[32105]: PHP Notice:  Alles scheisse in Command line code on line 1\n","criticality":"Notice","file":"Command line code","line":"1"}
     }
 
 
