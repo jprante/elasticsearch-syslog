@@ -1,2 +1,3 @@
 org.elasticsearch.common.syslog
 org.elasticsearch.plugin.syslog
+org.elasticsearch.syslog
