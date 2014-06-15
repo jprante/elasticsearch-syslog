@@ -44,11 +44,11 @@ Do not forget to restart the node after installing.
 
 ## Project docs
 
-The Maven project site is available at `Github <http://jprante.github.io/elasticsearch-syslog>`_
+The Maven project site is available at [Github](http://jprante.github.io/elasticsearch-syslog)
 
 ## Issues
 
-All feedback is welcome! If you find issues, please post them at `Github <https://github.com/jprante/elasticsearch-syslog/issues>`_
+All feedback is welcome! If you find issues, please post them at [Github](https://github.com/jprante/elasticsearch-syslog/issues)
 
 # Example
 
