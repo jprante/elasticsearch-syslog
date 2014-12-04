@@ -38,7 +38,7 @@ public class MessageParser {
 
     private Cache<String, Long> timestampCache;
 
-    private Map<String,String> fieldNames = new HashMap<String,String>() {{
+    private Map<String, String> fieldNames = new HashMap<String, String>() {{
         put("host", "host");
         put("facility", "facility");
         put("severity", "severity");
@@ -46,7 +46,7 @@ public class MessageParser {
         put("message", "message");
     }};
 
-    private Map<String,Pattern> patterns;
+    private Map<String, Pattern> patterns;
 
     public MessageParser() {
         timeParser = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss").withZoneUTC();
@@ -60,7 +60,7 @@ public class MessageParser {
                 });
     }
 
-    public MessageParser setPatterns(Map<String,Pattern> patterns) {
+    public MessageParser setPatterns(Map<String, Pattern> patterns) {
         this.patterns = patterns;
         return this;
     }
@@ -130,7 +130,7 @@ public class MessageParser {
         }
         builder.field(fieldNames.get("message"), data);
         if (patterns != null) {
-            for (Map.Entry<String,Pattern> entry : patterns.entrySet()) {
+            for (Map.Entry<String, Pattern> entry : patterns.entrySet()) {
                 Matcher m = entry.getValue().matcher(data);
                 if (m.find()) {
                     builder.field(entry.getKey(), m.group(1));

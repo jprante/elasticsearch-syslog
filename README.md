@@ -25,12 +25,13 @@ You can set the following parameters:
 
 | Elasticsearch version  | Plugin      | Release date |
 | ---------------------- | ----------- | -------------|
+| 1.4.0                  | 1.4.0.0     | Dec  4, 2014 |
 | 1.2.1                  | 1.2.1.1     | Jun 15, 2014 |
 
 ## Installation
 
 ```
-./bin/plugin -install syslog -url http://xbib.org/repository/org/xbib/elasticsearch/plugin/elasticsearch-syslog/1.2.1.1/elasticsearch-syslog-1.2.1.1.zip
+./bin/plugin -install syslog -url http://xbib.org/repository/org/xbib/elasticsearch/plugin/elasticsearch-syslog/1.4.0.0/elasticsearch-syslog-1.4.0.0.zip
 ```
 
 Do not forget to restart the node after installing.
@@ -39,6 +40,7 @@ Do not forget to restart the node after installing.
 
 | File                                          | SHA1                                     |
 | --------------------------------------------- | -----------------------------------------|
+| elasticsearch-syslog-1.4.0.0.zip              | c3b1b8404f89c16caa46cebe6ad66f9da11fcd27 |
 | elasticsearch-syslog-1.2.1.1.zip              | 7813a73e12628c60429aec1d89dd42b352d68a1b |
 | elasticsearch-syslog-1.2.1.0.zip              | bf7f911ab0fa8b9d2396623ee715d8d690adf848 |
 

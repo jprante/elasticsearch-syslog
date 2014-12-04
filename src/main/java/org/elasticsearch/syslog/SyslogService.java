@@ -112,18 +112,18 @@ public class SyslogService extends AbstractLifecycleComponent<SyslogService> {
             formatter = DateTimeFormat.forPattern(index);
         }
         this.type = componentSettings.get("type", "syslog");
-        Map<String,Object> map = (Map<String,Object>)componentSettings.getAsStructuredMap().get("patterns");
+        Map<String, Object> map = (Map<String, Object>) componentSettings.getAsStructuredMap().get("patterns");
         Map<String, Pattern> patterns = newHashMap();
         if (map != null) {
             for (String key : map.keySet()) {
-                patterns.put(key, Pattern.compile((String)map.get(key)));
+                patterns.put(key, Pattern.compile((String) map.get(key)));
             }
         }
         this.messageParser = new MessageParser().setPatterns(patterns);
-        map = (Map<String,Object>)componentSettings.getAsStructuredMap().get("field_names");
+        map = (Map<String, Object>) componentSettings.getAsStructuredMap().get("field_names");
         if (map != null) {
             for (String key : map.keySet()) {
-                messageParser.setFieldName(key, (String)map.get(key));
+                messageParser.setFieldName(key, (String) map.get(key));
             }
         }
         logger.info("syslog server at host [{}], port [{}], bulk_actions [{}], bulk_size [{}], flush_interval [{}], concurrent_requests [{}], index [{}], type [{}], patterns [{}]",

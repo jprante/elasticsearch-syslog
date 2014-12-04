@@ -80,8 +80,9 @@ public enum Severity {
      * @throws IllegalArgumentException the given value is not a valid Syslog severity textual code
      */
     public static Severity fromLabel(String label) throws IllegalArgumentException {
-        if (label == null || label.isEmpty())
+        if (label == null || label.isEmpty()) {
             return null;
+        }
 
         Severity severity = severityFromLabel.get(label);
         if (severity == null) {
@@ -92,6 +93,7 @@ public enum Severity {
 
     /**
      * Syslog severity numerical code
+     * @return numerical code
      */
     public int numericalCode() {
         return numericalCode;
@@ -99,6 +101,7 @@ public enum Severity {
 
     /**
      * Syslog severity textual code. Not {@code null}.
+     * @return the severity label
      */
     public String label() {
         return label;
@@ -106,6 +109,7 @@ public enum Severity {
 
     /**
      * Compare on {@link Severity#numericalCode()}
+     * @return comparator for severities
      */
     public static Comparator<Severity> comparator() {
         return new Comparator<Severity>() {

@@ -1,4 +1,3 @@
-
 package org.elasticsearch.common.syslog;
 
 import java.util.Comparator;
@@ -7,9 +6,7 @@ import java.util.Map;
 
 /**
  * Syslog facility as defined in <a href="https://tools.ietf.org/html/rfc5424">RFC 5424 - The Syslog Protocol</a>.
- * <p/>
  * See <a href="http://tools.ietf.org/html/rfc5427">RFC 5427 - Textual Conventions for Syslog Management</a> for the {@link #label}.
- *
  */
 public enum Facility implements Comparable<Facility> {
 
@@ -154,8 +151,9 @@ public enum Facility implements Comparable<Facility> {
      * @throws IllegalArgumentException the given value is not a valid Syslog facility textual code
      */
     public static Facility fromLabel(String label) throws IllegalArgumentException {
-        if (label == null || label.isEmpty())
+        if (label == null || label.isEmpty()) {
             return null;
+        }
 
         Facility facility = facilityFromLabel.get(label);
         if (facility == null) {
@@ -166,6 +164,7 @@ public enum Facility implements Comparable<Facility> {
 
     /**
      * Syslog facility numerical code
+     * @return numerical code
      */
     public int numericalCode() {
         return numericalCode;
@@ -173,6 +172,7 @@ public enum Facility implements Comparable<Facility> {
 
     /**
      * Syslog facility textual code. Not {@code null}.
+     * @return label
      */
     public String label() {
         return label;
@@ -180,6 +180,7 @@ public enum Facility implements Comparable<Facility> {
 
     /**
      * Compare on {@link Facility#numericalCode()}
+     * @return comparator for facilities
      */
     public static Comparator<Facility> comparator() {
         return new Comparator<Facility>() {
