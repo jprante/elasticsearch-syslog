@@ -38,7 +38,7 @@ You can set the following parameters:
 ## Installation
 
 ```
-./bin/plugin -install syslog -url http://xbib.org/repository/org/xbib/elasticsearch/plugin/elasticsearch-syslog/1.4.0.0/elasticsearch-syslog-1.4.0.0.zip
+./bin/plugin -install syslog -url http://xbib.org/repository/org/xbib/elasticsearch/plugin/elasticsearch-syslog/1.4.0.3/elasticsearch-syslog-1.4.0.3.zip
 ```
 
 Do not forget to restart the node after installing.
