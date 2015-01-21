@@ -47,7 +47,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
 import static org.elasticsearch.common.collect.Maps.newHashMap;
-import static org.elasticsearch.common.util.concurrent.EsExecutors.daemonThreadFactory;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 public class SyslogService extends AbstractLifecycleComponent<SyslogService> {
@@ -126,7 +125,7 @@ public class SyslogService extends AbstractLifecycleComponent<SyslogService> {
                 messageParser.setFieldName(key, (String) map.get(key));
             }
         }
-        logger.info("syslog server at host [{}], port [{}], bulk_actions [{}], bulk_size [{}], flush_interval [{}], concurrent_requests [{}], index [{}], type [{}], patterns [{}]",
+        logger.info("syslog server: host [{}], port [{}], bulk_actions [{}], bulk_size [{}], flush_interval [{}], concurrent_requests [{}], index [{}], type [{}], patterns [{}]",
                 host, port, bulkActions, bulkSize, flushInterval, concurrentRequests, index, type, patterns);
     }
 
@@ -140,6 +139,7 @@ public class SyslogService extends AbstractLifecycleComponent<SyslogService> {
                 .build();
         initializeUDP();
         initializeTCP();
+        logger.info("syslog server up");
     }
 
     @Override
@@ -157,6 +157,7 @@ public class SyslogService extends AbstractLifecycleComponent<SyslogService> {
             tcpBootstrap.releaseExternalResources();
         }
         bulkProcessor.close();
+        logger.info("syslog server down");
     }
 
     @Override
@@ -164,7 +165,8 @@ public class SyslogService extends AbstractLifecycleComponent<SyslogService> {
     }
 
     private void initializeUDP() {
-        udpBootstrap = new ConnectionlessBootstrap(new NioDatagramChannelFactory(Executors.newCachedThreadPool(daemonThreadFactory(settings, "syslog_udp_worker"))));
+        udpBootstrap = new ConnectionlessBootstrap(new NioDatagramChannelFactory(
+                Executors.newCachedThreadPool(), 4));
         udpBootstrap.setOption("receiveBufferSize", receiveBufferSize.bytesAsInt());
         udpBootstrap.setOption("receiveBufferSizePredictorFactory", receiveBufferSizePredictorFactory);
         udpBootstrap.setOption("broadcast", "false");
@@ -206,9 +208,9 @@ public class SyslogService extends AbstractLifecycleComponent<SyslogService> {
 
     private void initializeTCP() {
         tcpBootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(
-                Executors.newCachedThreadPool(daemonThreadFactory(settings, "syslog_tcp_boss")),
-                Executors.newCachedThreadPool(daemonThreadFactory(settings, "syslog_tcp_worker")),
+                Executors.newCachedThreadPool(), Executors.newCachedThreadPool(),
                 componentSettings.getAsInt("tcp.worker", 4)));
+
         tcpBootstrap.setOption("receiveBufferSize", receiveBufferSize.bytesAsInt());
         tcpBootstrap.setOption("receiveBufferSizePredictorFactory", receiveBufferSizePredictorFactory);
         tcpBootstrap.setOption("reuseAddress", componentSettings.getAsBoolean("tcp.reuse_address", true));
@@ -288,6 +290,7 @@ public class SyslogService extends AbstractLifecycleComponent<SyslogService> {
                 return;
             }
             logger.warn("failure caught", e.getCause());
+            throw new IOException(e.getCause());
         }
 
         private void parse(ChannelHandlerContext ctx, ChannelBuffer buffer, XContentBuilder builder) throws IOException {

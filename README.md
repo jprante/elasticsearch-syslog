@@ -2,6 +2,12 @@
 
 With this plugin, Elasticsearch can receive syslog messages over UDP or TCP protocol.
 
+JSON messages are automatically recognized and parsed.
+
+A @cee prefix is recognized, see
+
+http://cee.mitre.org/language/1.0-beta1/clt.html#transport-mappings
+
 ## Parameter
 
 You can set the following parameters:
@@ -25,6 +31,7 @@ You can set the following parameters:
 
 | Elasticsearch version  | Plugin      | Release date |
 | ---------------------- | ----------- | -------------|
+| 1.4.0                  | 1.4.0.3     | Jan 21, 2014 |
 | 1.4.0                  | 1.4.0.0     | Dec  4, 2014 |
 | 1.2.1                  | 1.2.1.1     | Jun 15, 2014 |
 
@@ -40,6 +47,7 @@ Do not forget to restart the node after installing.
 
 | File                                          | SHA1                                     |
 | --------------------------------------------- | -----------------------------------------|
+| elasticsearch-syslog-1.4.0.3.zip              | c3b1b8404f89c16caa46cebe6ad66f9da11fcd27 |
 | elasticsearch-syslog-1.4.0.0.zip              | c3b1b8404f89c16caa46cebe6ad66f9da11fcd27 |
 | elasticsearch-syslog-1.2.1.1.zip              | 7813a73e12628c60429aec1d89dd42b352d68a1b |
 | elasticsearch-syslog-1.2.1.0.zip              | bf7f911ab0fa8b9d2396623ee715d8d690adf848 |

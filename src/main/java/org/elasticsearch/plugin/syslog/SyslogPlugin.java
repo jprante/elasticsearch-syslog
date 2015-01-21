@@ -37,7 +37,7 @@ public class SyslogPlugin extends AbstractPlugin {
     @Override
     public Collection<Class<? extends Module>> modules() {
         Collection<Class<? extends Module>> modules = newArrayList();
-        if (settings.getAsBoolean("syslog.enabled", true)) {
+        if (settings.getAsBoolean("plugins.syslog.enabled", true)) {
             modules.add(SyslogModule.class);
         }
         return modules;
@@ -46,7 +46,7 @@ public class SyslogPlugin extends AbstractPlugin {
     @Override
     public Collection<Class<? extends LifecycleComponent>> services() {
         Collection<Class<? extends LifecycleComponent>> services = newArrayList();
-        if (settings.getAsBoolean("syslog.enabled", true)) {
+        if (settings.getAsBoolean("plugins.syslog.enabled", true)) {
             services.add(SyslogService.class);
         }
         return services;
