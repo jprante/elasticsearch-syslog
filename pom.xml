@@ -10,7 +10,7 @@
 
     <groupId>org.xbib.elasticsearch.plugin</groupId>
     <artifactId>elasticsearch-syslog</artifactId>
-    <version>1.4.0.3</version>
+    <version>2.1.1.0</version>
     <packaging>jar</packaging>
 
     <inceptionYear>2014</inceptionYear>
@@ -39,8 +39,17 @@
     <properties>
         <github.global.server>github</github.global.server>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <java.compile.version>1.7</java.compile.version>
-        <elasticsearch.version>1.4.0</elasticsearch.version>
+        <java.version>1.7</java.version>
+        <elasticsearch.version>2.1.1</elasticsearch.version>
+        <descriptor.javaVersion>${java.version}</descriptor.javaVersion>
+        <descriptor.elasticsearchVersion>${elasticsearch.version}</descriptor.elasticsearchVersion>
+        <descriptor.classname>org.xbib.elasticsearch.plugin.syslog.SyslogPlugin</descriptor.classname>
+        <descriptor.name>syslog</descriptor.name>
+        <descriptor.description>${project.description}</descriptor.description>
+        <descriptor.jvm>true</descriptor.jvm>
+        <descriptor.isolated>true</descriptor.isolated>
+        <descriptor.site>false</descriptor.site>
+        <descriptor.version>${project.version}</descriptor.version>
     </properties>
 
     <dependencies>
@@ -53,6 +62,31 @@
             <scope>compile</scope>
         </dependency>
 
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <type>jar</type>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-slf4j-impl</artifactId>
+            <version>2.5</version>
+            <type>jar</type>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>2.5</version>
+            <type>jar</type>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <build>
@@ -60,22 +94,25 @@
             <extension>
                 <groupId>org.apache.maven.wagon</groupId>
                 <artifactId>wagon-ssh-external</artifactId>
-                <version>2.6</version>
+                <version>2.10</version>
             </extension>
         </extensions>
         <resources>
             <resource>
                 <directory>${basedir}/src/main/resources</directory>
+            </resource>
+            <resource>
+                <directory>${basedir}/src/main/templates</directory>
                 <filtering>true</filtering>
                 <includes>
-                    <include>es-plugin.properties</include>
+                    <include>plugin-descriptor.properties</include>
                 </includes>
             </resource>
             <resource>
-                <directory>${basedir}/src/main/resources</directory>
+                <directory>${basedir}/src/main/templates</directory>
                 <filtering>false</filtering>
                 <excludes>
-                    <exclude>es-plugin.properties</exclude>
+                    <exclude>plugin-descriptor.properties</exclude>
                 </excludes>
             </resource>
         </resources>
@@ -83,10 +120,10 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.1</version>
+                <version>3.3</version>
                 <configuration>
-                    <source>${java.compile.version}</source>
-                    <target>${java.compile.version}</target>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
                     <encoding>UTF-8</encoding>
                     <optimize>true</optimize>
                     <showDeprecation>true</showDeprecation>
@@ -97,12 +134,18 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.17</version>
+                <version>2.19</version>
                 <configuration>
                     <skipTests>false</skipTests>
                     <includes>
                         <include>**/*Test.java</include>
                     </includes>
+                    <systemProperties>
+                        <property>
+                            <name>path.home</name>
+                            <value>${project.basedir}/target</value>
+                        </property>
+                    </systemProperties>
                 </configuration>
             </plugin>
             <plugin>
@@ -146,29 +189,8 @@
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>buildnumber-maven-plugin</artifactId>
-                <version>1.2</version>
-                <executions>
-                    <execution>
-                        <phase>validate</phase>
-                        <goals>
-                            <goal>create</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <doCheck>false</doCheck>
-                    <doUpdate>false</doUpdate>
-                </configuration>
-            </plugin>
-            <plugin>
-                <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>2.7</version>
-            </plugin>
-            <plugin>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.9.1</version>
+                <version>2.10.3</version>
                 <configuration>
                     <encoding>${project.build.sourceEncoding}</encoding>
                     <locale>en</locale>
@@ -196,7 +218,7 @@
             <plugin>
                 <groupId>com.github.github</groupId>
                 <artifactId>site-maven-plugin</artifactId>
-                <version>0.9</version>
+                <version>0.12</version>
                 <configuration>
                     <message>Building site for ${project.version}</message>
                 </configuration>
@@ -216,7 +238,7 @@
         <plugins>
             <plugin>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.9.1</version>
+                <version>2.10.3</version>
                 <configuration>
                     <encoding>${project.build.sourceEncoding}</encoding>
                     <locale>en</locale>
@@ -226,7 +248,7 @@
             </plugin>
             <plugin>
                 <artifactId>maven-surefire-report-plugin</artifactId>
-                <version>2.17</version>
+                <version>2.19</version>
             </plugin>
         </plugins>
     </reporting>

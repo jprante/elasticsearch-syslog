@@ -1,14 +1,13 @@
 package org.elasticsearch.common.syslog;
 
-import org.elasticsearch.ElasticsearchIllegalArgumentException;
-import org.elasticsearch.common.cache.Cache;
-import org.elasticsearch.common.cache.CacheBuilder;
-import org.elasticsearch.common.cache.CacheLoader;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
 import org.elasticsearch.common.joda.Joda;
-import org.elasticsearch.common.joda.time.DateTime;
-import org.elasticsearch.common.joda.time.format.DateTimeFormat;
-import org.elasticsearch.common.joda.time.format.DateTimeFormatter;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -75,15 +74,16 @@ public class MessageParser {
         return this;
     }
 
+    @SuppressWarnings("unchecked")
     public void parseMessage(String msg, XContentBuilder builder) throws IOException {
         int msgLen = msg.length();
         int pos = 0;
         if (msg.charAt(pos) != '<') {
-            throw new ElasticsearchIllegalArgumentException("bad format: invalid priority: cannot find open bracket '<' " + msg);
+            throw new IllegalArgumentException("bad format: invalid priority: cannot find open bracket '<' " + msg);
         }
         int end = msg.indexOf('>');
         if (end < 0 || end > 6) {
-            throw new ElasticsearchIllegalArgumentException("bad format: invalid priority: cannot find end bracket '>' " + msg);
+            throw new IllegalArgumentException("bad format: invalid priority: cannot find end bracket '>' " + msg);
         }
         int pri = Integer.parseInt(msg.substring(1, end));
         Facility facility = Facility.fromNumericalCode(pri / 8);
@@ -91,7 +91,7 @@ public class MessageParser {
         builder.field(fieldNames.get("facility"), facility.label())
                 .field(fieldNames.get("severity"), severity.label());
         if (msgLen <= end + 1) {
-            throw new ElasticsearchIllegalArgumentException("bad format: no data except priority " + msg);
+            throw new IllegalArgumentException("bad format: no data except priority " + msg);
         }
         pos = end + 1;
         if (msgLen > pos + 2 && "1 ".equals(msg.substring(pos, pos + 2))) {
@@ -102,19 +102,19 @@ public class MessageParser {
         if (ch == '-') {
             timestamp = System.currentTimeMillis();
             if (msgLen <= pos + 2) {
-                throw new ElasticsearchIllegalArgumentException("bad syslog format (missing hostname)");
+                throw new IllegalArgumentException("bad syslog format (missing hostname)");
             }
             pos += 2;
         } else if (ch >= 'A' && ch <= 'Z') {
             if (msgLen <= pos + RFC3164_LEN) {
-                throw new ElasticsearchIllegalArgumentException("bad timestamp format");
+                throw new IllegalArgumentException("bad timestamp format");
             }
             timestamp = parseRFC3164Time(msg.substring(pos, pos + RFC3164_LEN));
             pos += RFC3164_LEN + 1;
         } else {
             int sp = msg.indexOf(' ', pos);
             if (sp == -1) {
-                throw new ElasticsearchIllegalArgumentException("bad timestamp format");
+                throw new IllegalArgumentException("bad timestamp format");
             }
             timestamp = parseRFC5424Date(msg.substring(pos, sp));
             pos = sp + 1;
@@ -122,7 +122,7 @@ public class MessageParser {
         builder.field(fieldNames.get("timestamp"), formatter.print(timestamp));
         int ns = msg.indexOf(' ', pos);
         if (ns == -1) {
-            throw new ElasticsearchIllegalArgumentException("bad syslog format (missing hostname)");
+            throw new IllegalArgumentException("bad syslog format (missing hostname)");
         }
         String hostname = msg.substring(pos, ns);
         builder.field(fieldNames.get("host"), hostname);
@@ -159,19 +159,19 @@ public class MessageParser {
     private Long parseRFC5424Date(String msg) {
         int len = msg.length();
         if (len <= RFC5424_PREFIX_LEN) {
-            throw new ElasticsearchIllegalArgumentException("bad format: not a valid RFC5424 timestamp: " + msg);
+            throw new IllegalArgumentException("bad format: not a valid RFC5424 timestamp: " + msg);
         }
         String timestampPrefix = msg.substring(0, RFC5424_PREFIX_LEN);
         Long timestamp = timestampCache.getIfPresent(timestampPrefix);
         int pos = RFC5424_PREFIX_LEN;
         if (timestamp == null) {
-            throw new ElasticsearchIllegalArgumentException("parse error: timestamp is null");
+            throw new IllegalArgumentException("parse error: timestamp is null");
         }
         if (msg.charAt(pos) == '.') {
             boolean found = false;
             int end = pos + 1;
             if (len <= end) {
-                throw new ElasticsearchIllegalArgumentException("bad timestamp format (no TZ)");
+                throw new IllegalArgumentException("bad timestamp format (no TZ)");
             }
             while (!found) {
                 char ch = msg.charAt(end);
@@ -185,7 +185,7 @@ public class MessageParser {
                 long milliseconds = (long) (Double.parseDouble(msg.substring(pos, end)) * 1000.0);
                 timestamp += milliseconds;
             } else {
-                throw new ElasticsearchIllegalArgumentException("bad format: invalid timestamp (fractional portion): " + msg);
+                throw new IllegalArgumentException("bad format: invalid timestamp (fractional portion): " + msg);
             }
             pos = end;
         }
@@ -193,7 +193,7 @@ public class MessageParser {
         if (ch != 'Z') {
             if (ch == '+' || ch == '-') {
                 if (len <= pos + 5) {
-                    throw new ElasticsearchIllegalArgumentException("bad format: invalid timezone: " + msg);
+                    throw new IllegalArgumentException("bad format: invalid timezone: " + msg);
                 }
                 int sign = ch == '+' ? +1 : -1;
                 char[] hourzone = new char[5];
@@ -209,7 +209,7 @@ public class MessageParser {
                     int minOffset = Integer.parseInt(msg.substring(pos + 4, pos + 6));
                     timestamp -= sign * ((hourOffset * 60) + minOffset) * 60000;
                 } else {
-                    throw new ElasticsearchIllegalArgumentException("bad format: invalid timezone: " + msg);
+                    throw new IllegalArgumentException("bad format: invalid timezone: " + msg);
                 }
             }
         }

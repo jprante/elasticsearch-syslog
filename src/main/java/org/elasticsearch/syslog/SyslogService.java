@@ -9,24 +9,6 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.common.bytes.ChannelBufferBytesReference;
 import org.elasticsearch.common.component.AbstractLifecycleComponent;
 import org.elasticsearch.common.inject.Inject;
-import org.elasticsearch.common.joda.time.DateTime;
-import org.elasticsearch.common.joda.time.format.DateTimeFormat;
-import org.elasticsearch.common.joda.time.format.DateTimeFormatter;
-import org.elasticsearch.common.netty.bootstrap.ConnectionlessBootstrap;
-import org.elasticsearch.common.netty.bootstrap.ServerBootstrap;
-import org.elasticsearch.common.netty.buffer.ChannelBuffer;
-import org.elasticsearch.common.netty.channel.Channel;
-import org.elasticsearch.common.netty.channel.ChannelHandlerContext;
-import org.elasticsearch.common.netty.channel.ChannelPipeline;
-import org.elasticsearch.common.netty.channel.ChannelPipelineFactory;
-import org.elasticsearch.common.netty.channel.Channels;
-import org.elasticsearch.common.netty.channel.ExceptionEvent;
-import org.elasticsearch.common.netty.channel.FixedReceiveBufferSizePredictorFactory;
-import org.elasticsearch.common.netty.channel.MessageEvent;
-import org.elasticsearch.common.netty.channel.ReceiveBufferSizePredictorFactory;
-import org.elasticsearch.common.netty.channel.SimpleChannelUpstreamHandler;
-import org.elasticsearch.common.netty.channel.socket.nio.NioDatagramChannelFactory;
-import org.elasticsearch.common.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.elasticsearch.common.network.NetworkService;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.syslog.MessageParser;
@@ -35,21 +17,61 @@ import org.elasticsearch.common.unit.ByteSizeUnit;
 import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.jboss.netty.bootstrap.ConnectionlessBootstrap;
+import org.jboss.netty.bootstrap.ServerBootstrap;
+import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.ChannelPipeline;
+import org.jboss.netty.channel.ChannelPipelineFactory;
+import org.jboss.netty.channel.Channels;
+import org.jboss.netty.channel.ExceptionEvent;
+import org.jboss.netty.channel.FixedReceiveBufferSizePredictorFactory;
+import org.jboss.netty.channel.MessageEvent;
+import org.jboss.netty.channel.ReceiveBufferSizePredictorFactory;
+import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
+import org.jboss.netty.channel.socket.nio.NioDatagramChannelFactory;
+import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 
 import java.io.IOException;
 import java.net.BindException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
-import static org.elasticsearch.common.collect.Maps.newHashMap;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 public class SyslogService extends AbstractLifecycleComponent<SyslogService> {
+
+    private final static String SYSLOG_HOST = "syslog.host";
+
+    private final static String SYSLOG_PORT = "syslog.port";
+
+    private final static String SYSLOG_BULK_ACTIONS = "bulk_actions";
+
+    private final static String SYSLOG_BULK_SIZE = "bulk_size";
+
+    private final static String SYSLOG_FLUSH_INTERVAL = "flush_interval";
+
+    private final static String SYSLOG_CONCURRENT_REUQUESTS = "concurrent_requests";
+
+    private final static String SYSLOG_RECEIVE_BUFFER_SIZE = "receive_buffer_size";
+
+    private final static String SYSLOG_INDEX = "index";
+
+    private final static String SYSLOG_TYPE = "type";
+
+    private final static String SYSLOG_PATTERNS = "patterns";
+
+    private final static String SYSLOG_FIELD_NAMES = "field_names";
 
     private final Client client;
 
@@ -92,34 +114,34 @@ public class SyslogService extends AbstractLifecycleComponent<SyslogService> {
     private Channel tcpChannel;
 
     @Inject
+    @SuppressWarnings("unchecked")
     public SyslogService(Settings settings, Client client, NetworkService networkService) {
         super(settings);
         this.client = client;
         this.networkService = networkService;
-        this.host = componentSettings.get("host");
-        this.port = componentSettings.get("port", "9500-9600");
-        this.bulkActions = componentSettings.getAsInt("bulk_actions", 1000);
-        this.bulkSize = componentSettings.getAsBytesSize("bulk_size", new ByteSizeValue(5, ByteSizeUnit.MB));
-        this.flushInterval = componentSettings.getAsTime("flush_interval", TimeValue.timeValueSeconds(5));
-        this.concurrentRequests = componentSettings.getAsInt("concurrent_requests", 4);
-        this.receiveBufferSize = componentSettings.getAsBytesSize("receive_buffer_size", new ByteSizeValue(10, ByteSizeUnit.MB));
-        this.receiveBufferSizePredictorFactory =
-                new FixedReceiveBufferSizePredictorFactory(componentSettings.getAsBytesSize("receive_predictor_size", receiveBufferSize).bytesAsInt());
-        this.index = componentSettings.get("index", "'syslog-'YYYY.MM.dd");
-        this.isTimeWindow = componentSettings.getAsBoolean("index_is_timewindow", true);
+        this.host = settings.get(SYSLOG_HOST, "127.0.0.1");
+        this.port = settings.get(SYSLOG_PORT, "9500-9600");
+        this.bulkActions = settings.getAsInt(SYSLOG_BULK_ACTIONS, 1000);
+        this.bulkSize = settings.getAsBytesSize(SYSLOG_BULK_SIZE, new ByteSizeValue(5, ByteSizeUnit.MB));
+        this.flushInterval = settings.getAsTime(SYSLOG_FLUSH_INTERVAL, TimeValue.timeValueSeconds(5));
+        this.concurrentRequests = settings.getAsInt(SYSLOG_CONCURRENT_REUQUESTS, Runtime.getRuntime().availableProcessors());
+        this.receiveBufferSize = settings.getAsBytesSize(SYSLOG_RECEIVE_BUFFER_SIZE, new ByteSizeValue(10, ByteSizeUnit.MB));
+        this.receiveBufferSizePredictorFactory = new FixedReceiveBufferSizePredictorFactory(receiveBufferSize.bytesAsInt());
+        this.index = settings.get(SYSLOG_INDEX, "'syslog-'YYYY.MM.dd");
+        this.isTimeWindow = index.indexOf('\'') > 0;
         if (isTimeWindow) {
             formatter = DateTimeFormat.forPattern(index);
         }
-        this.type = componentSettings.get("type", "syslog");
-        Map<String, Object> map = (Map<String, Object>) componentSettings.getAsStructuredMap().get("patterns");
-        Map<String, Pattern> patterns = newHashMap();
+        this.type = settings.get(SYSLOG_TYPE, "syslog");
+        Map<String, Object> map = (Map<String, Object>) settings.getAsStructuredMap().get(SYSLOG_PATTERNS);
+        Map<String, Pattern> patterns = new HashMap<>();
         if (map != null) {
             for (String key : map.keySet()) {
                 patterns.put(key, Pattern.compile((String) map.get(key)));
             }
         }
         this.messageParser = new MessageParser().setPatterns(patterns);
-        map = (Map<String, Object>) componentSettings.getAsStructuredMap().get("field_names");
+        map = (Map<String, Object>) settings.getAsStructuredMap().get(SYSLOG_FIELD_NAMES);
         if (map != null) {
             for (String key : map.keySet()) {
                 messageParser.setFieldName(key, (String) map.get(key));
@@ -177,14 +199,14 @@ public class SyslogService extends AbstractLifecycleComponent<SyslogService> {
             }
         });
 
-        InetAddress address;
+        InetAddress[] address;
         try {
             address = networkService.resolveBindHostAddress(host);
         } catch (IOException e) {
             logger.warn("failed to resolve host {}", e, host);
             return;
         }
-        final InetAddress hostAddress = address;
+        final InetAddress hostAddress = address[0];
         PortsRange portsRange = new PortsRange(port);
         final AtomicReference<Exception> lastException = new AtomicReference<>();
         boolean success = portsRange.iterate(new PortsRange.PortCallback() {
@@ -209,19 +231,19 @@ public class SyslogService extends AbstractLifecycleComponent<SyslogService> {
     private void initializeTCP() {
         tcpBootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(
                 Executors.newCachedThreadPool(), Executors.newCachedThreadPool(),
-                componentSettings.getAsInt("tcp.worker", 4)));
+                settings.getAsInt("tcp.worker", 4)));
 
         tcpBootstrap.setOption("receiveBufferSize", receiveBufferSize.bytesAsInt());
         tcpBootstrap.setOption("receiveBufferSizePredictorFactory", receiveBufferSizePredictorFactory);
-        tcpBootstrap.setOption("reuseAddress", componentSettings.getAsBoolean("tcp.reuse_address", true));
-        tcpBootstrap.setOption("tcpNoDelay", componentSettings.getAsBoolean("tcp.no_delay", true));
-        tcpBootstrap.setOption("keepAlive", componentSettings.getAsBoolean("tcp.keep_alive", true));
+        tcpBootstrap.setOption("reuseAddress", settings.getAsBoolean("tcp.reuse_address", true));
+        tcpBootstrap.setOption("tcpNoDelay", settings.getAsBoolean("tcp.no_delay", true));
+        tcpBootstrap.setOption("keepAlive", settings.getAsBoolean("tcp.keep_alive", true));
 
         tcpBootstrap.setOption("child.receiveBufferSize", receiveBufferSize.bytesAsInt());
         tcpBootstrap.setOption("child.receiveBufferSizePredictorFactory", receiveBufferSizePredictorFactory);
-        tcpBootstrap.setOption("child.reuseAddress", componentSettings.getAsBoolean("tcp.reuse_address", true));
-        tcpBootstrap.setOption("child.tcpNoDelay", componentSettings.getAsBoolean("tcp.no_delay", true));
-        tcpBootstrap.setOption("child.keepAlive", componentSettings.getAsBoolean("tcp.keep_alive", true));
+        tcpBootstrap.setOption("child.reuseAddress", settings.getAsBoolean("tcp.reuse_address", true));
+        tcpBootstrap.setOption("child.tcpNoDelay", settings.getAsBoolean("tcp.no_delay", true));
+        tcpBootstrap.setOption("child.keepAlive", settings.getAsBoolean("tcp.keep_alive", true));
 
         tcpBootstrap.setPipelineFactory(new ChannelPipelineFactory() {
             @Override
@@ -230,14 +252,14 @@ public class SyslogService extends AbstractLifecycleComponent<SyslogService> {
             }
         });
 
-        InetAddress address;
+        InetAddress[] address;
         try {
             address = networkService.resolveBindHostAddress(host);
         } catch (IOException e) {
             logger.warn("failed to resolve host {}", e, host);
             return;
         }
-        final InetAddress hostAddress = address;
+        final InetAddress hostAddress = address[0];
         PortsRange portsRange = new PortsRange(port);
         final AtomicReference<Exception> lastException = new AtomicReference<>();
         boolean success = portsRange.iterate(new PortsRange.PortCallback() {
