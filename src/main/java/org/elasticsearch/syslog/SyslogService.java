@@ -9,7 +9,6 @@ import org.elasticsearch.client.Client;
 import org.elasticsearch.common.bytes.ChannelBufferBytesReference;
 import org.elasticsearch.common.component.AbstractLifecycleComponent;
 import org.elasticsearch.common.inject.Inject;
-import org.elasticsearch.common.network.NetworkService;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.syslog.MessageParser;
 import org.elasticsearch.common.transport.PortsRange;
@@ -75,8 +74,6 @@ public class SyslogService extends AbstractLifecycleComponent<SyslogService> {
 
     private final Client client;
 
-    private final NetworkService networkService;
-
     private final String host;
 
     private final String port;
@@ -115,10 +112,9 @@ public class SyslogService extends AbstractLifecycleComponent<SyslogService> {
 
     @Inject
     @SuppressWarnings("unchecked")
-    public SyslogService(Settings settings, Client client, NetworkService networkService) {
+    public SyslogService(Settings settings, Client client) {
         super(settings);
         this.client = client;
-        this.networkService = networkService;
         this.host = settings.get(SYSLOG_HOST, "127.0.0.1");
         this.port = settings.get(SYSLOG_PORT, "9500-9600");
         this.bulkActions = settings.getAsInt(SYSLOG_BULK_ACTIONS, 1000);
@@ -199,14 +195,14 @@ public class SyslogService extends AbstractLifecycleComponent<SyslogService> {
             }
         });
 
-        InetAddress[] address;
+        InetAddress address;
         try {
-            address = networkService.resolveBindHostAddress(host);
+            address = SyslogNetworkUtils.resolveInetAddress(host, null);
         } catch (IOException e) {
             logger.warn("failed to resolve host {}", e, host);
             return;
         }
-        final InetAddress hostAddress = address[0];
+        final InetAddress hostAddress = address;
         PortsRange portsRange = new PortsRange(port);
         final AtomicReference<Exception> lastException = new AtomicReference<>();
         boolean success = portsRange.iterate(new PortsRange.PortCallback() {
@@ -252,14 +248,14 @@ public class SyslogService extends AbstractLifecycleComponent<SyslogService> {
             }
         });
 
-        InetAddress[] address;
+        InetAddress address;
         try {
-            address = networkService.resolveBindHostAddress(host);
+            address = SyslogNetworkUtils.resolveInetAddress(host, null);
         } catch (IOException e) {
             logger.warn("failed to resolve host {}", e, host);
             return;
         }
-        final InetAddress hostAddress = address[0];
+        final InetAddress hostAddress = address;
         PortsRange portsRange = new PortsRange(port);
         final AtomicReference<Exception> lastException = new AtomicReference<>();
         boolean success = portsRange.iterate(new PortsRange.PortCallback() {

@@ -29,6 +29,7 @@ You can set the following parameters:
 
 | Elasticsearch version  | Plugin      | Release date |
 | ---------------------- | ----------- | -------------|
+| 2.2.0                  | 2.2.0.0     | Feb 11, 2016 |
 | 2.1.1                  | 2.1.1.0     | Dec 27, 2015 |
 | 1.4.0                  | 1.4.0.3     | Jan 21, 2014 |
 | 1.4.0                  | 1.4.0.0     | Dec  4, 2014 |
@@ -37,7 +38,7 @@ You can set the following parameters:
 ## Installation for Elasticsearch 2.x
 
 ```
-./bin/plugin install http://xbib.org/repository/org/xbib/elasticsearch/plugin/elasticsearch-syslog/2.1.1.0/elasticsearch-syslog-2.1.1.0.zip
+./bin/plugin install http://xbib.org/repository/org/xbib/elasticsearch/plugin/elasticsearch-syslog/2.2.0.0/elasticsearch-syslog-2.2.0.0.zip
 ```
 
 ## Installation for Elasticsearch 1.x
