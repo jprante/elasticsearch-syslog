@@ -9,7 +9,7 @@ println "Current JVM: " + org.gradle.internal.jvm.Jvm.current()
 
 ext {
     pluginName = 'syslog'
-    pluginClassname  = 'org.xbib.elasticsearch.plugin.syslog.SyslogPlugin'
+    pluginClassname  = 'org.elasticsearch.plugin.syslog.SyslogPlugin'
     pluginDescription = 'Syslog receiver plugin for Elasticsearch'
     versions = [
         'log4j': '2.5',
