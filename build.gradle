@@ -1,20 +1,20 @@
 
-def xbibGroup = 'org.xbib.elasticsearch.plugin'
-def xbibVersion = '2.2.0.0'
+group = 'org.xbib.elasticsearch.plugin'
+version = '2.2.1.0'
 
-group = xbibGroup
-version = xbibVersion
-
-println "Current JVM: " + org.gradle.internal.jvm.Jvm.current()
+println "Host: " + java.net.InetAddress.getLocalHost()
+println "Gradle: " + gradle.gradleVersion + " JVM: " + org.gradle.internal.jvm.Jvm.current() + " Groovy: " + GroovySystem.getVersion()
+println "Build: group: '${project.group}', name: '${project.name}', version: '${project.version}'"
+println "Timestamp: " + java.time.Instant.now().atZone(java.time.ZoneId.systemDefault()).toString()
 
 ext {
     pluginName = 'syslog'
     pluginClassname  = 'org.elasticsearch.plugin.syslog.SyslogPlugin'
     pluginDescription = 'Syslog receiver plugin for Elasticsearch'
     versions = [
-        'log4j': '2.5',
-        'junit' : '4.12',
-        'elasticsearch' : '2.2.0'
+            'elasticsearch' : '2.2.1',
+            'log4j': '2.5',
+            'junit' : '4.12'
     ]
 }
 
@@ -65,13 +65,11 @@ dependencies {
     wagon 'org.apache.maven.wagon:wagon-ssh-external:2.10'
 }
 
-compileJava {
-    sourceCompatibility = 1.7
-    targetCompatibility = 1.7
-}
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
 
 tasks.withType(JavaCompile) {
-    options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+    options.compilerArgs << "-Xlint:unchecked,deprecation"
 }
 
 test {
