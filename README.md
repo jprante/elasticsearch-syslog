@@ -29,6 +29,7 @@ You can set the following parameters:
 
 | Elasticsearch version  | Plugin      | Release date |
 | ---------------------- | ----------- | -------------|
+| 2.2.1                  | 2.2.1.0     | Mar 31, 2016 |
 | 2.2.0                  | 2.2.0.0     | Feb 11, 2016 |
 | 2.1.1                  | 2.1.1.0     | Dec 27, 2015 |
 | 1.4.0                  | 1.4.0.3     | Jan 21, 2014 |
